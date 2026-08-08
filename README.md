@@ -1,4 +1,4 @@
-# m35_photo_edit
+# Kodak M35 Analog Camera -- Photo Editing 
 
 Restoring badly fogged 35mm colour-negative scans from a Kodak M35. Classical image
 processing only — no generative models, no invented detail.
