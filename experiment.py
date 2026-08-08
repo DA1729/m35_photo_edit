@@ -35,6 +35,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument("--grain", type=float, default=None)
     ap.add_argument("--halation", type=float, default=None)
     ap.add_argument("--dehaze-strength", type=float, default=None)
+    ap.add_argument("--seam-z", type=float, default=None,
+                    help="robust z above which a frame-spanning edge counts as a light-leak "
+                         "seam and is removed in the gradient domain; 0 disables")
+    ap.add_argument("--spot-z", type=float, default=None,
+                    help="dust/scratch spotting threshold; 0 (default) disables it, because "
+                         "on these scans grain and dust are not separable")
     ap.add_argument("--no-contact-sheet", action="store_true")
     return ap.parse_args(argv)
 
@@ -63,7 +69,8 @@ def main(argv: list[str]) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     lab_cfg: dict[str, Any] = dict(LAB_DEFAULTS)
-    for key in ("chroma_gain", "lc_gain", "grain", "halation", "dehaze_strength"):
+    for key in ("chroma_gain", "lc_gain", "grain", "halation", "dehaze_strength",
+                "seam_z", "spot_z"):
         value = getattr(args, key)
         if value is not None:
             lab_cfg[key] = value

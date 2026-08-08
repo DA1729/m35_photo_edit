@@ -13,6 +13,7 @@ from ..noise import chroma_confidence_map, denoise
 from ..render import bw_channel_weights
 from ..tone import tonal_recovery
 from .local_contrast import laplacian_local_contrast
+from .recon import detect_seams, remove_seams, spot_defects
 
 LAB_DEFAULTS: dict[str, Any] = {
     "chroma_gain": 3.5,
@@ -25,13 +26,31 @@ LAB_DEFAULTS: dict[str, Any] = {
     "gain_floor": 0.7,
     "gain_lo_pct": 25.0,
     "gain_hi_pct": 85.0,
+    "seam_z": 40.0,
+    "seam_halfwidth": 3,
+    "spot_z": 0.0,
+    "spot_max_area": 12,
 }
 
 
 def corrected_base(rgb: np.ndarray, stats: FrameStats, cfg: dict[str, Any],
-                   params: dict[str, Any]) -> np.ndarray:
+                   params: dict[str, Any], lab_cfg: dict[str, Any] | None = None) -> np.ndarray:
+    lab_cfg = lab_cfg or {}
     x = predenoise_crushed_channels(rgb, stats, cfg)
     x = channel_levels(x, stats, cfg, cfg["neutrality"], params)
+
+    seam_z = float(lab_cfg.get("seam_z", 0.0))
+    if seam_z > 0.0:
+        cols, rows = detect_seams(x, {"seam_z": seam_z})
+        if cols or rows:
+            x = remove_seams(x, cols, rows, {"seam_halfwidth": lab_cfg.get("seam_halfwidth", 3)})
+        params["seams"] = {"cols": cols, "rows": rows}
+
+    if float(lab_cfg.get("spot_z", 0.0)) > 0.0:
+        x, n = spot_defects(x, {"spot_z": lab_cfg["spot_z"],
+                                "spot_max_area": lab_cfg.get("spot_max_area", 12)})
+        params["spots_filled"] = n
+
     x = flatten_uneven_fog(x, stats, cfg, params)
     x = remove_residual_cast(x, cfg, params)
     return protect_highlights(x, cfg)
@@ -55,7 +74,7 @@ def render_fused(rgb: np.ndarray, stats: FrameStats, base_cfg: dict[str, Any],
         "chroma_denoise_scale": lab_cfg["chroma_denoise_scale"],
     })
 
-    base = corrected_base(rgb, stats, cfg, p)
+    base = corrected_base(rgb, stats, cfg, p, lab_cfg)
 
     color = tonal_recovery(base, cfg, p)
     color = denoise(color, cfg, p)
