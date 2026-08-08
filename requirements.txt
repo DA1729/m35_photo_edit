@@ -1,0 +1,15 @@
+# restore_film.py dependencies
+#
+# Install with:   python -m pip install -r requirements.txt
+#
+# Version floors, not pins -- newer releases are fine.  NumPy 2.x is supported.
+
+numpy>=1.24
+opencv-python>=4.8
+Pillow>=10.0
+
+# Note: scikit-image is deliberately NOT required.  Every operation in the pipeline is
+# implemented with OpenCV/NumPy primitives (guided filter, CLAHE, bilateral, non-local
+# means, LAB conversions), so pulling in SciPy + scikit-image would add a large dependency
+# for no functional gain.  If you want it available for your own experiments:
+#     python -m pip install scikit-image
