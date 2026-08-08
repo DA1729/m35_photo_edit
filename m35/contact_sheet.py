@@ -26,12 +26,19 @@ def load_font(size: int):
     return ImageFont.load_default()
 
 
-def build_contact_sheet(rows: list[dict], out_path: Path, thumb_w: int) -> None:
+DEFAULT_COLUMNS = ("original", "neutral", "film", "bw")
+DEFAULT_TITLES = ("ORIGINAL", "NEUTRAL", "FILM", "BLACK & WHITE")
+
+
+def build_contact_sheet(rows: list[dict], out_path: Path, thumb_w: int,
+                        columns: tuple[str, ...] = DEFAULT_COLUMNS,
+                        titles: tuple[str, ...] = DEFAULT_TITLES,
+                        heading: str = "35mm film restoration -- contact sheet") -> None:
     if not rows:
         return
 
-    cols = ["original", "neutral", "film", "bw"]
-    titles = ["ORIGINAL", "NEUTRAL", "FILM", "BLACK & WHITE"]
+    cols = list(columns)
+    titles = list(titles)
     pad, header_h, label_h, caption_h = 14, 54, 26, 34
 
     thumbs: list[list[Image.Image]] = []
@@ -53,8 +60,7 @@ def build_contact_sheet(rows: list[dict], out_path: Path, thumb_w: int) -> None:
     f_head = load_font(17)
     f_cap = load_font(14)
 
-    draw.text((pad, 16), "35mm film restoration -- contact sheet",
-              font=f_title, fill=(238, 238, 240))
+    draw.text((pad, 16), heading, font=f_title, fill=(238, 238, 240))
     for ci, t in enumerate(titles):
         draw.text((pad + ci * (thumb_w + pad), header_h + 4), t, font=f_head, fill=(150, 200, 235))
 
